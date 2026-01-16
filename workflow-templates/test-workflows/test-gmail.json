@@ -1,0 +1,307 @@
+{
+  "updatedAt": "2026-01-16T07:42:00.878Z",
+  "createdAt": "2026-01-16T06:16:44.683Z",
+  "id": "E1NqSweym3WxUsCQ",
+  "name": "TEST: Gmail",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "test-gmail",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ],
+      "webhookId": "wh-gy7ri"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@gmail.com",
+        "subject": "✅ n8n Gmail Test",
+        "emailType": "text",
+        "message": "This is a test email from your local n8n instance.\n\nTime: {{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}\n\nIf you see this, your Gmail OAuth2 connection is working perfectly!",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Test Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kqQQwRQvzbnGtK2v",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: true,\n    message: \"✅ Gmail test executed.\",\n    details: $input.all()\n  }\n}];"
+      },
+      "id": "format-result",
+      "name": "Format Test Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-55z0knf",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Send Test Email": {
+      "main": [
+        [
+          {
+            "node": "Format Test Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Test Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Send Test Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "db9bf5af-54bb-4b67-a72a-b9f949d5563b",
+  "activeVersionId": "db9bf5af-54bb-4b67-a72a-b9f949d5563b",
+  "versionCounter": 13,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T06:16:44.687Z",
+      "createdAt": "2026-01-16T06:16:44.687Z",
+      "role": "workflow:owner",
+      "workflowId": "E1NqSweym3WxUsCQ",
+      "projectId": "tsTbJZGUE5kG3iLn",
+      "project": {
+        "updatedAt": "2026-01-16T01:43:55.287Z",
+        "createdAt": "2025-09-25T16:21:12.451Z",
+        "id": "tsTbJZGUE5kG3iLn",
+        "name": "Wen Jyue Lew <wenjyue@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-25T16:21:12.452Z",
+            "createdAt": "2025-09-25T16:21:12.452Z",
+            "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+            "projectId": "tsTbJZGUE5kG3iLn",
+            "user": {
+              "updatedAt": "2026-01-16T05:25:41Z",
+              "createdAt": "2025-09-25T16:21:11.915Z",
+              "id": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+              "email": "wenjyue@gmail.com",
+              "firstName": "Wen Jyue",
+              "lastName": "Lew",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-25T16:22:49.004Z",
+                "personalization_survey_n8n_version": "1.112.5",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "Z5672DIWhrcHlLgj",
+                "userActivatedAt": 1758819204165,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 0,
+                  "lastShownAt": 1768539858694
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-16",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-16T07:15:55.158Z",
+      "createdAt": "2026-01-16T07:15:55.158Z",
+      "id": "XMXs88S6cJ6Hiyjq",
+      "name": "Test"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T07:14:03.493Z",
+    "createdAt": "2026-01-16T07:14:03.493Z",
+    "versionId": "db9bf5af-54bb-4b67-a72a-b9f949d5563b",
+    "workflowId": "E1NqSweym3WxUsCQ",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "test-gmail",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          180,
+          300
+        ],
+        "webhookId": "wh-gy7ri"
+      },
+      {
+        "parameters": {
+          "sendTo": "YOUR_EMAIL@gmail.com",
+          "subject": "✅ n8n Gmail Test",
+          "emailType": "text",
+          "message": "This is a test email from your local n8n instance.\n\nTime: {{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}\n\nIf you see this, your Gmail OAuth2 connection is working perfectly!",
+          "options": {}
+        },
+        "id": "send-email",
+        "name": "Send Test Email",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "kqQQwRQvzbnGtK2v",
+            "name": "Gmail account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    success: true,\n    message: \"✅ Gmail test executed.\",\n    details: $input.all()\n  }\n}];"
+        },
+        "id": "format-result",
+        "name": "Format Test Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger-55z0knf",
+        "name": "When clicking \"Execute Workflow\"",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          180,
+          100
+        ]
+      }
+    ],
+    "connections": {
+      "Send Test Email": {
+        "main": [
+          [
+            {
+              "node": "Format Test Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Send Test Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking \"Execute Workflow\"": {
+        "main": [
+          [
+            {
+              "node": "Send Test Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wen Jyue Lew",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-16T07:14:03.524Z",
+        "id": 28,
+        "workflowId": "E1NqSweym3WxUsCQ",
+        "versionId": "db9bf5af-54bb-4b67-a72a-b9f949d5563b",
+        "event": "activated",
+        "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac"
+      }
+    ]
+  }
+}

@@ -1,192 +1,270 @@
 /**
  * N8N Workflow Builder Utility
- * Helper functions to programmatically create n8n workflows
+ * Helper functions to construct n8n workflow JSON programmatically
+ * Used by the n8n-workflow-builder Claude skill
  */
 
-class N8NWorkflowBuilder {
+const fs = require('fs');
+const path = require('path');
+const N8NApiClient = require('./n8n-api-client');
+
+/**
+ * Workflow Builder Class
+ * Provides a fluent API for building n8n workflows
+ */
+class WorkflowBuilder {
   constructor(name, description = '') {
     this.workflow = {
-      name: name,
+      name,
+      description,
+      active: false,
       nodes: [],
       connections: {},
       settings: {
-        executionOrder: 'v1'
-      },
-      staticData: null,
-      tags: [],
-      triggerCount: 0,
-      updatedAt: new Date().toISOString(),
-      versionId: this.generateId()
+        executionOrder: 'v1',
+        callerPolicy: 'workflowsFromSameOwner',
+        availableInMCP: false
+      }
     };
-    this.nodeMap = new Map();
-    this.lastNodeId = null;
-  }
-
-  generateId() {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    this.nodePositions = {
+      x: 180,
+      y: 300,
+      xSpacing: 220
+    };
   }
 
   /**
-   * Add a node to the workflow
-   * @param {string} type - Node type (e.g., 'n8n-nodes-base.webhook', 'n8n-nodes-base.httpRequest')
-   * @param {string} name - Display name for the node
-   * @param {object} parameters - Node-specific parameters
-   * @param {object} position - Position coordinates {x, y}
-   * @returns {string} Node ID
+   * Add a Manual Trigger node
    */
-  addNode(type, name, parameters = {}, position = null) {
-    const nodeId = this.generateId();
+  addManualTrigger(options = {}) {
+    const nodeId = options.id || 'manual-trigger';
     const node = {
+      parameters: {},
       id: nodeId,
-      name: name,
-      type: type,
+      name: options.name || 'When clicking "Execute Workflow"',
+      type: 'n8n-nodes-base.manualTrigger',
       typeVersion: 1,
-      position: position || this.getNextPosition(),
-      parameters: parameters,
-      webhookId: type.includes('webhook') ? this.generateId() : undefined
+      position: options.position || [this.nodePositions.x, 100]
+    };
+    this.workflow.nodes.push(node);
+    return this;
+  }
+
+  /**
+   * Add a Webhook Trigger node
+   */
+  addWebhookTrigger(path, options = {}) {
+    const nodeId = options.id || 'webhook-trigger';
+    const node = {
+      parameters: {
+        httpMethod: options.method || 'GET',
+        path,
+        options: options.webhookOptions || {}
+      },
+      id: nodeId,
+      name: options.name || 'Webhook',
+      type: 'n8n-nodes-base.webhook',
+      typeVersion: 1,
+      position: options.position || [this.nodePositions.x, this.nodePositions.y]
     };
 
+    if (options.webhookId) {
+      node.webhookId = options.webhookId;
+    }
+
     this.workflow.nodes.push(node);
-    this.nodeMap.set(name, nodeId);
-    this.lastNodeId = nodeId;
-    return nodeId;
+    return this;
+  }
+
+  /**
+   * Add a Schedule Trigger node
+   */
+  addScheduleTrigger(cronExpression, options = {}) {
+    const nodeId = options.id || 'schedule-trigger';
+    const node = {
+      parameters: {
+        rule: {
+          interval: [{
+            field: 'cronExpression',
+            expression: cronExpression
+          }]
+        }
+      },
+      id: nodeId,
+      name: options.name || 'Schedule Trigger',
+      type: 'n8n-nodes-base.scheduleTrigger',
+      typeVersion: 1.2,
+      position: options.position || [this.nodePositions.x, this.nodePositions.y]
+    };
+    this.workflow.nodes.push(node);
+    return this;
+  }
+
+  /**
+   * Add an HTTP Request node
+   */
+  addHttpRequest(url, options = {}) {
+    const nodeId = options.id || this.generateNodeId('http-request');
+    const x = this.nodePositions.x + (this.workflow.nodes.length * this.nodePositions.xSpacing);
+
+    const node = {
+      parameters: {
+        url,
+        method: options.method || 'GET',
+        ...options.parameters
+      },
+      id: nodeId,
+      name: options.name || 'HTTP Request',
+      type: 'n8n-nodes-base.httpRequest',
+      typeVersion: options.typeVersion || 4.2,
+      position: options.position || [x, this.nodePositions.y]
+    };
+
+    // Add authentication if provided
+    if (options.authentication) {
+      node.parameters.authentication = options.authentication;
+    }
+
+    // Add body parameters for POST/PUT
+    if (options.bodyParameters) {
+      node.parameters.sendBody = true;
+      node.parameters.contentType = options.contentType || 'json';
+      node.parameters.bodyParameters = options.bodyParameters;
+    }
+
+    // Add query parameters
+    if (options.queryParameters) {
+      node.parameters.options = node.parameters.options || {};
+      node.parameters.options.queryParameters = options.queryParameters;
+    }
+
+    this.workflow.nodes.push(node);
+    return this;
+  }
+
+  /**
+   * Add a Code node (JavaScript)
+   */
+  addCode(jsCode, options = {}) {
+    const nodeId = options.id || this.generateNodeId('code');
+    const x = this.nodePositions.x + (this.workflow.nodes.length * this.nodePositions.xSpacing);
+
+    const node = {
+      parameters: {
+        jsCode
+      },
+      id: nodeId,
+      name: options.name || 'Code',
+      type: 'n8n-nodes-base.code',
+      typeVersion: 2,
+      position: options.position || [x, this.nodePositions.y]
+    };
+    this.workflow.nodes.push(node);
+    return this;
+  }
+
+  /**
+   * Generate a unique node ID
+   */
+  generateNodeId(prefix) {
+    const existingIds = this.workflow.nodes.map(n => n.id);
+    let counter = 1;
+    let id = `${prefix}-${counter}`;
+    while (existingIds.includes(id)) {
+      counter++;
+      id = `${prefix}-${counter}`;
+    }
+    return id;
   }
 
   /**
    * Connect two nodes
-   * @param {string} fromNodeName - Source node name
-   * @param {string} toNodeName - Target node name
-   * @param {number} outputIndex - Output index (default: 0)
-   * @param {number} inputIndex - Input index (default: 0)
    */
-  connectNodes(fromNodeName, toNodeName, outputIndex = 0, inputIndex = 0) {
-    const fromNodeId = this.nodeMap.get(fromNodeName);
-    const toNodeId = this.nodeMap.get(toNodeName);
-
-    if (!fromNodeId || !toNodeId) {
-      throw new Error(`Node not found: ${fromNodeName} or ${toNodeName}`);
-    }
+  connect(fromNodeId, toNodeId, options = {}) {
+    const outputType = options.outputType || 'main';
+    const outputIndex = options.outputIndex || 0;
+    const inputIndex = options.inputIndex || 0;
 
     if (!this.workflow.connections[fromNodeId]) {
       this.workflow.connections[fromNodeId] = {};
     }
-
-    if (!this.workflow.connections[fromNodeId].main) {
-      this.workflow.connections[fromNodeId].main = [];
+    if (!this.workflow.connections[fromNodeId][outputType]) {
+      this.workflow.connections[fromNodeId][outputType] = [];
+    }
+    if (!this.workflow.connections[fromNodeId][outputType][outputIndex]) {
+      this.workflow.connections[fromNodeId][outputType][outputIndex] = [];
     }
 
-    if (!this.workflow.connections[fromNodeId].main[outputIndex]) {
-      this.workflow.connections[fromNodeId].main[outputIndex] = [];
-    }
-
-    this.workflow.connections[fromNodeId].main[outputIndex].push({
+    this.workflow.connections[fromNodeId][outputType][outputIndex].push({
       node: toNodeId,
-      type: 'main',
+      type: outputType,
       index: inputIndex
     });
+
+    return this;
   }
 
   /**
-   * Get next position for a node (simple grid layout)
+   * Set workflow as active
    */
-  getNextPosition() {
-    const nodeCount = this.workflow.nodes.length;
-    const x = 250 + (nodeCount % 3) * 300;
-    const y = 100 + Math.floor(nodeCount / 3) * 200;
-    return { x, y };
+  setActive(active = true) {
+    this.workflow.active = active;
+    return this;
   }
 
   /**
-   * Add a tag to the workflow
+   * Build and return the workflow JSON
    */
-  addTag(tag) {
-    if (!this.workflow.tags.includes(tag)) {
-      this.workflow.tags.push(tag);
-    }
-  }
-
-  /**
-   * Get the complete workflow JSON
-   */
-  toJSON() {
-    return JSON.stringify(this.workflow, null, 2);
-  }
-
-  /**
-   * Get the workflow object
-   */
-  getWorkflow() {
+  build() {
     return this.workflow;
   }
 
   /**
-   * Helper: Create a webhook trigger node
+   * Save workflow to file
    */
-  addWebhookTrigger(name = 'Webhook', path = 'webhook', httpMethod = 'POST') {
-    return this.addNode(
-      'n8n-nodes-base.webhook',
-      name,
-      {
-        path: path,
-        httpMethod: httpMethod,
-        responseMode: 'responseNode'
-      }
-    );
+  save(filename, directory = null) {
+    const dir = directory || path.join(__dirname, '..', 'workflow-templates');
+    const filepath = path.join(dir, filename);
+
+    // Ensure directory exists
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Write JSON file
+    fs.writeFileSync(filepath, JSON.stringify(this.workflow, null, 2));
+    console.log(`✅ Workflow saved to: ${filepath}`);
+    return filepath;
   }
 
   /**
-   * Helper: Create an HTTP Request node
+   * Generate workflow documentation
    */
-  addHttpRequest(name = 'HTTP Request', method = 'GET', url = '') {
-    return this.addNode(
-      'n8n-nodes-base.httpRequest',
-      name,
-      {
-        method: method,
-        url: url,
-        options: {}
-      }
-    );
-  }
+  generateDocs() {
+    const docs = [];
+    docs.push(`# ${this.workflow.name}\n`);
 
-  /**
-   * Helper: Create a Set node (for data transformation)
-   */
-  addSetNode(name = 'Set', values = {}) {
-    return this.addNode(
-      'n8n-nodes-base.set',
-      name,
-      {
-        values: {
-          string: Object.entries(values).map(([key, value]) => ({
-            name: key,
-            value: value
-          }))
-        },
-        options: {}
-      }
-    );
-  }
+    if (this.workflow.description) {
+      docs.push(`${this.workflow.description}\n`);
+    }
 
-  /**
-   * Helper: Create an IF condition node
-   */
-  addIfNode(name = 'IF', conditions = {}) {
-    return this.addNode(
-      'n8n-nodes-base.if',
-      name,
-      {
-        conditions: {
-          options: {
-            caseSensitive: true,
-            leftValue: '',
-            typeValidation: 'strict'
-          },
-          conditions: [conditions]
-        }
-      }
-    );
+    docs.push(`## Nodes\n`);
+    this.workflow.nodes.forEach(node => {
+      docs.push(`- **${node.name}** (${node.type})`);
+    });
+
+    docs.push(`\n## Connections\n`);
+    Object.keys(this.workflow.connections).forEach(fromNode => {
+      const connections = this.workflow.connections[fromNode].main || [];
+      connections.forEach((targets, idx) => {
+        targets.forEach(target => {
+          docs.push(`- ${fromNode} → ${target.node}`);
+        });
+      });
+    });
+
+    return docs.join('\n');
   }
 }
 
-module.exports = N8NWorkflowBuilder;
+module.exports = { WorkflowBuilder };

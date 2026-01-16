@@ -51,6 +51,32 @@ Invoke-RestMethod -Uri "http://localhost:5678/api/v1/workflows" `
     -ContentType "application/json"
 ```
 
+## Option 2b: Via CLI (Alternative to API)
+
+When the API is inaccessible or for CI/CD pipelines, use the n8n CLI directly.
+
+```powershell
+# Import one workflow
+npx n8n import:workflow --input="./workflow-templates/my-workflow.json"
+
+# Import all workflows from a folder
+npx n8n import:workflow --input="./workflow-templates/" --separate
+
+# Overwrite existing workflow with same name
+npx n8n import:workflow --input="./workflow-templates/my-workflow.json" --replaceExisting
+```
+
+### CLI Flags
+
+| Flag | Description |
+|------|-------------|
+| `--separate` | Import each workflow in folder individually |
+| `--userId=<id>` | Assign to specific user (multi-user setup) |
+| `--project=<name>` | Import into specific project (n8n 1.20+) |
+| `--replaceExisting` | Overwrite if workflow with same name exists |
+
+> ✅ This method writes directly to the database. Refresh the UI to see imported workflows.
+
 ## Option 3: Import from Template
 
 1. Find template in `workflow-templates/`

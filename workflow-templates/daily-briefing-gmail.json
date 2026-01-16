@@ -1,0 +1,201 @@
+{
+    "name": "Morning Briefing - Gmail to WhatsApp",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "30 8 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "schedule-trigger",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                0,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "getAll",
+                "returnAll": false,
+                "limit": 20,
+                "filters": {
+                    "labelIds": [
+                        "INBOX"
+                    ],
+                    "readStatus": "unread",
+                    "receivedAfter": "={{ $now.minus({hours: 24}).toISO() }}"
+                },
+                "options": {
+                    "dataPropertyAttachmentsPrefixName": "attachment_"
+                }
+            },
+            "id": "gmail-fetch",
+            "name": "Gmail - Fetch Unread",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.1,
+            "position": [
+                220,
+                0
+            ],
+            "credentials": {
+                "gmailOAuth2": {
+                    "id": "",
+                    "name": "Gmail account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Aggregate all email snippets into a single formatted string\nconst emails = $input.all();\n\nif (emails.length === 0) {\n  return [{\n    json: {\n      aggregatedContent: \"No unread emails in the last 24 hours.\",\n      emailCount: 0\n    }\n  }];\n}\n\nconst formattedEmails = emails.map((item, index) => {\n  const email = item.json;\n  const from = email.from?.emailAddress || email.from || 'Unknown sender';\n  const subject = email.subject || '(No subject)';\n  const snippet = email.snippet || email.textPlain || '(No preview available)';\n  const date = email.date || email.internalDate || '';\n  \n  return `Email ${index + 1}:\\nFrom: ${from}\\nSubject: ${subject}\\nDate: ${date}\\nPreview: ${snippet}`;\n}).join('\\n\\n---\\n\\n');\n\nreturn [{\n  json: {\n    aggregatedContent: formattedEmails,\n    emailCount: emails.length\n  }\n}];"
+            },
+            "id": "aggregate-emails",
+            "name": "Aggregate Emails",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                440,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "chat",
+                "operation": "message",
+                "modelId": {
+                    "__rl": true,
+                    "value": "gpt-4o-mini",
+                    "mode": "list",
+                    "cachedResultName": "gpt-4o-mini"
+                },
+                "messages": {
+                    "values": [
+                        {
+                            "role": "system",
+                            "content": "You are an executive assistant. Summarize these emails into 3 prioritized bullet points. Highlight urgent items with 🚨. Ignore promotional spam and newsletters. Keep it concise for WhatsApp reading."
+                        },
+                        {
+                            "role": "user",
+                            "content": "=Here are my {{ $json.emailCount }} unread emails from the last 24 hours:\n\n{{ $json.aggregatedContent }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "maxTokens": 500,
+                    "temperature": 0.3
+                }
+            },
+            "id": "openai-summarize",
+            "name": "OpenAI - Summarize",
+            "type": "@n8n/n8n-nodes-langchain.openAi",
+            "typeVersion": 1.8,
+            "position": [
+                660,
+                0
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "",
+                    "name": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.periskope.app/v1/messages/send",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"to\": \"YOUR_PHONE_NUMBER\",\n  \"message\": \"☀️ *Morning Briefing*\\n📅 {{ $now.format('EEEE, MMMM d') }}\\n\\n{{ $json.message.content }}\"\n}",
+                "options": {}
+            },
+            "id": "periskope-send",
+            "name": "Periskope - Send Briefing",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                880,
+                0
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "",
+                    "name": "Periskope API Key"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail - Fetch Unread",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gmail - Fetch Unread": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Emails",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Emails": {
+            "main": [
+                [
+                    {
+                        "node": "OpenAI - Summarize",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI - Summarize": {
+            "main": [
+                [
+                    {
+                        "node": "Periskope - Send Briefing",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 1,
+    "active": false
+}

@@ -1,0 +1,403 @@
+{
+  "updatedAt": "2026-01-16T07:42:05.534Z",
+  "createdAt": "2026-01-16T06:16:44.849Z",
+  "id": "dUUfr1YPwKFaLXIQ",
+  "name": "TEST: HTTP Request",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "test-http-request",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ],
+      "webhookId": "wh-s3lg1"
+    },
+    {
+      "parameters": {
+        "url": "https://httpbin.org/get",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "test",
+                "value": "n8n-integration-test"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ $now.toISO() }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "http-get",
+      "name": "HTTP GET Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://httpbin.org/post",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "test",
+              "value": "n8n-post-test"
+            },
+            {
+              "name": "message",
+              "value": "This is a test POST request from n8n"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-post",
+      "name": "HTTP POST Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format test results\nconst getResult = $('HTTP GET Request').first().json;\nconst postResult = $input.first().json;\n\nreturn [{\n  json: {\n    success: true,\n    message: \"✅ HTTP Request test successful! Both GET and POST requests worked.\",\n    get: {\n      success: true,\n      status: getResult.status || 'N/A',\n      url: getResult.url || 'N/A',\n      args: getResult.args || {}\n    },\n    post: {\n      success: true,\n      status: postResult.status || 'N/A',\n      url: postResult.url || 'N/A',\n      json: postResult.json || {}\n    },\n    testDate: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-result",
+      "name": "Format Test Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-cknxyo",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "HTTP GET Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP POST Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP POST Request": {
+      "main": [
+        [
+          {
+            "node": "Format Test Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP GET Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "HTTP GET Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "7a17f93a-daf9-413e-9b54-de6331878ceb",
+  "activeVersionId": "7a17f93a-daf9-413e-9b54-de6331878ceb",
+  "versionCounter": 13,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T06:16:44.85Z",
+      "createdAt": "2026-01-16T06:16:44.85Z",
+      "role": "workflow:owner",
+      "workflowId": "dUUfr1YPwKFaLXIQ",
+      "projectId": "tsTbJZGUE5kG3iLn",
+      "project": {
+        "updatedAt": "2026-01-16T01:43:55.287Z",
+        "createdAt": "2025-09-25T16:21:12.451Z",
+        "id": "tsTbJZGUE5kG3iLn",
+        "name": "Wen Jyue Lew <wenjyue@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-25T16:21:12.452Z",
+            "createdAt": "2025-09-25T16:21:12.452Z",
+            "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+            "projectId": "tsTbJZGUE5kG3iLn",
+            "user": {
+              "updatedAt": "2026-01-16T05:25:41Z",
+              "createdAt": "2025-09-25T16:21:11.915Z",
+              "id": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+              "email": "wenjyue@gmail.com",
+              "firstName": "Wen Jyue",
+              "lastName": "Lew",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-25T16:22:49.004Z",
+                "personalization_survey_n8n_version": "1.112.5",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "Z5672DIWhrcHlLgj",
+                "userActivatedAt": 1758819204165,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 0,
+                  "lastShownAt": 1768539858694
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-16",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-16T07:15:55.158Z",
+      "createdAt": "2026-01-16T07:15:55.158Z",
+      "id": "XMXs88S6cJ6Hiyjq",
+      "name": "Test"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T07:14:03.776Z",
+    "createdAt": "2026-01-16T07:14:03.776Z",
+    "versionId": "7a17f93a-daf9-413e-9b54-de6331878ceb",
+    "workflowId": "dUUfr1YPwKFaLXIQ",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "test-http-request",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          180,
+          300
+        ],
+        "webhookId": "wh-s3lg1"
+      },
+      {
+        "parameters": {
+          "url": "https://httpbin.org/get",
+          "options": {
+            "queryParameters": {
+              "parameters": [
+                {
+                  "name": "test",
+                  "value": "n8n-integration-test"
+                },
+                {
+                  "name": "timestamp",
+                  "value": "={{ $now.toISO() }}"
+                }
+              ]
+            }
+          }
+        },
+        "id": "http-get",
+        "name": "HTTP GET Request",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          440,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://httpbin.org/post",
+          "method": "POST",
+          "sendBody": true,
+          "contentType": "json",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "test",
+                "value": "n8n-post-test"
+              },
+              {
+                "name": "message",
+                "value": "This is a test POST request from n8n"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ $now.toISO() }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "http-post",
+        "name": "HTTP POST Request",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format test results\nconst getResult = $('HTTP GET Request').first().json;\nconst postResult = $input.first().json;\n\nreturn [{\n  json: {\n    success: true,\n    message: \"✅ HTTP Request test successful! Both GET and POST requests worked.\",\n    get: {\n      success: true,\n      status: getResult.status || 'N/A',\n      url: getResult.url || 'N/A',\n      args: getResult.args || {}\n    },\n    post: {\n      success: true,\n      status: postResult.status || 'N/A',\n      url: postResult.url || 'N/A',\n      json: postResult.json || {}\n    },\n    testDate: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "format-result",
+        "name": "Format Test Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          300
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger-cknxyo",
+        "name": "When clicking \"Execute Workflow\"",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          180,
+          100
+        ]
+      }
+    ],
+    "connections": {
+      "HTTP GET Request": {
+        "main": [
+          [
+            {
+              "node": "HTTP POST Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP POST Request": {
+        "main": [
+          [
+            {
+              "node": "Format Test Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "HTTP GET Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking \"Execute Workflow\"": {
+        "main": [
+          [
+            {
+              "node": "HTTP GET Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wen Jyue Lew",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-16T07:14:03.807Z",
+        "id": 31,
+        "workflowId": "dUUfr1YPwKFaLXIQ",
+        "versionId": "7a17f93a-daf9-413e-9b54-de6331878ceb",
+        "event": "activated",
+        "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac"
+      }
+    ]
+  }
+}

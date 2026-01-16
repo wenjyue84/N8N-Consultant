@@ -1,0 +1,50 @@
+# N8N Consultant Project - Cursor Rules
+
+## Project Overview
+This is an n8n workflow automation consultant project. Help users design, build, and manage n8n workflows.
+
+## MCP Server - IMPORTANT
+
+An n8n MCP server (`n8n-mcp`) is configured for this project. USE IT for n8n-related tasks.
+
+### When to Use n8n-mcp Tools
+
+ALWAYS use MCP tools when the user asks about:
+- Node configuration (e.g., "How do I configure the HTTP Request node?")
+- Node parameters and operations
+- Workflow creation or modification
+- Listing or viewing workflows
+- n8n node documentation
+- Any n8n-specific question
+
+### Available MCP Tools
+- `search_nodes` - Search n8n nodes by name
+- `get_node_details` - Get detailed node documentation
+- `list_workflows` - List workflows in the n8n instance
+- `get_workflow` - Get specific workflow details
+- `create_workflow` - Create new workflows
+- `list_executions` - View execution history
+
+### MCP Configuration
+See `.cursor/mcp.json` for server configuration.
+
+## Key Files
+
+| Need | Location |
+|------|----------|
+| Project overview | `CLAUDE.md` |
+| Architecture | `.agent/context/architecture.md` |
+| Dependencies | `.agent/context/dependencies.md` |
+| API key | `credentials/n8n-api-key.txt` |
+| Workflow templates | `workflow-templates/` |
+| Utility scripts | `utilities/` |
+
+## n8n Instance
+- URL: `http://localhost:5678`
+- API: `http://localhost:5678/api/v1`
+
+## Rules
+1. Use MCP tools for n8n node questions - don't guess
+2. Never expose API keys in responses
+3. Store workflow exports in `workflow-templates/`
+4. Check `.agent/workflows/` for common operation guides

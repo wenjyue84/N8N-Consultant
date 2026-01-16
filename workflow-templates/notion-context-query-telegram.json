@@ -1,0 +1,209 @@
+{
+  "name": "2.4 Context Switcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notion-context-query",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "notion-context-webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extract-context",
+              "name": "context",
+              "value": "={{ $json.body?.context || $json.query?.context || $json.body?.text || $json.query?.text || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-context",
+      "name": "Extract Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "8daa8801-62e4-4447-a1cb-a5fedceedcb9",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "filterType": "json",
+        "filterJson": "={{ JSON.stringify({ \"and\": [ { \"property\": \"@Context\", \"select\": { \"equals\": $json.context || '' } }, { \"property\": \"Status\", \"select\": { \"does_not_equal\": \"Done\" } } ] }) }}"
+      },
+      "id": "notion-query",
+      "name": "Query Notion Tasks",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "NOTION_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and sort tasks by priority and due date\nconst items = $input.all();\nconst context = $('Extract Context').first().json.context || 'Unknown';\n\nif (items.length === 0) {\n  return [{\n    json: {\n      context: context,\n      count: 0,\n      message: `No tasks found for context \"${context}\" with Status ≠ Done.`,\n      tasks: []\n    }\n  }];\n}\n\n// Process each task\nconst tasks = items.map(item => {\n  const props = item.json.properties || {};\n  \n  // Extract task name\n  let taskName = 'Untitled';\n  if (props['Name'] && props['Name'].title && props['Name'].title[0]) {\n    taskName = props['Name'].title[0].plain_text;\n  } else if (props['Task'] && props['Task'].title && props['Task'].title[0]) {\n    taskName = props['Task'].title[0].plain_text;\n  }\n  \n  // Extract priority (assuming Priority is a select property)\n  let priority = 'Medium'; // Default\n  let priorityValue = 2; // For sorting: High=1, Medium=2, Low=3\n  if (props['Priority'] && props['Priority'].select) {\n    priority = props['Priority'].select.name || 'Medium';\n    if (priority === 'High' || priority === '🔴 High' || priority === 'High Priority') {\n      priorityValue = 1;\n    } else if (priority === 'Low' || priority === '🟢 Low' || priority === 'Low Priority') {\n      priorityValue = 3;\n    }\n  }\n  \n  // Extract due date\n  let dueDate = null;\n  let dueDateValue = null;\n  if (props['Due Date'] && props['Due Date'].date) {\n    dueDate = props['Due Date'].date.start || null;\n    if (dueDate) {\n      dueDateValue = new Date(dueDate).getTime();\n    }\n  } else if (props['Due'] && props['Due'].date) {\n    dueDate = props['Due'].date.start || null;\n    if (dueDate) {\n      dueDateValue = new Date(dueDate).getTime();\n    }\n  }\n  \n  // Extract Status (for display)\n  let status = 'Not Done';\n  if (props['Status'] && props['Status'].select) {\n    status = props['Status'].select.name || 'Not Done';\n  }\n  \n  return {\n    name: taskName,\n    priority: priority,\n    priorityValue: priorityValue,\n    dueDate: dueDate,\n    dueDateValue: dueDateValue || Number.MAX_SAFE_INTEGER, // Tasks without due date go to end\n    status: status,\n    id: item.json.id\n  };\n});\n\n// Sort: First by priority (High → Medium → Low), then by due date (earliest first)\ntasks.sort((a, b) => {\n  // First sort by priority\n  if (a.priorityValue !== b.priorityValue) {\n    return a.priorityValue - b.priorityValue;\n  }\n  // Then sort by due date (earliest first)\n  return a.dueDateValue - b.dueDateValue;\n});\n\n// Format message for Telegram\nlet message = `📋 Tasks for ${context}\\n\\n`;\nif (tasks.length === 0) {\n  message = `No tasks found for context \"${context}\" with Status ≠ Done.`;\n} else {\n  message += `Found ${tasks.length} task${tasks.length === 1 ? '' : 's'}:\\n\\n`;\n  \n  tasks.forEach((task, index) => {\n    const priorityEmoji = task.priorityValue === 1 ? '🔴' : task.priorityValue === 3 ? '🟢' : '🟡';\n    const dueDateStr = task.dueDate \n      ? new Date(task.dueDate).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })\n      : 'No due date';\n    \n    message += `${index + 1}. ${priorityEmoji} ${task.name}\\n`;\n    message += `   Priority: ${task.priority} | Due: ${dueDateStr}\\n\\n`;\n  });\n}\n\nreturn [{\n  json: {\n    context: context,\n    count: tasks.length,\n    message: message,\n    tasks: tasks\n  }\n}];"
+      },
+      "id": "sort-and-format",
+      "name": "Sort and Format Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-send",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"context\": $json.context, \"count\": $json.count, \"message\": \"Tasks sent to Telegram\" } }}"
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Context": {
+      "main": [
+        [
+          {
+            "node": "Query Notion Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Notion Tasks": {
+      "main": [
+        [
+          {
+            "node": "Sort and Format Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort and Format Tasks": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "GTD",
+      "createdAt": "2026-01-16T00:00:00.000Z",
+      "updatedAt": "2026-01-16T00:00:00.000Z"
+    },
+    {
+      "name": "Notion",
+      "createdAt": "2026-01-16T00:00:00.000Z",
+      "updatedAt": "2026-01-16T00:00:00.000Z"
+    },
+    {
+      "name": "Telegram",
+      "createdAt": "2026-01-16T00:00:00.000Z",
+      "updatedAt": "2026-01-16T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2026-01-16T00:00:00.000Z",
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "local"
+  }
+}

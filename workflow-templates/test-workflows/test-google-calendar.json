@@ -1,0 +1,485 @@
+{
+  "updatedAt": "2026-01-16T07:42:02.494Z",
+  "createdAt": "2026-01-16T06:16:44.743Z",
+  "id": "YoNrVBtzjBk01F1M",
+  "name": "TEST: Google Calendar",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "test-google-calendar",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ],
+      "webhookId": "wh-acsjx9"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendarId": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "returnAll": false,
+        "limit": 5,
+        "options": {
+          "timeMin": "={{ $now.toISO() }}",
+          "orderBy": "startTime",
+          "singleEvents": true
+        }
+      },
+      "id": "get-events",
+      "name": "Get Upcoming Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "googleCalendarOAuth2": {
+          "id": "GOOGLE_CALENDAR_CREDENTIAL_ID",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format test results\nconst items = $input.all();\nconst eventCount = items.length;\n\nconst events = items.map(item => {\n  const event = item.json;\n  return {\n    id: event.id,\n    summary: event.summary || '(No title)',\n    start: event.start?.dateTime || event.start?.date || 'N/A',\n    end: event.end?.dateTime || event.end?.date || 'N/A'\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    message: `✅ Google Calendar test successful! Found ${eventCount} upcoming event(s).`,\n    eventCount: eventCount,\n    events: events,\n    testDate: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-result",
+      "name": "Format Test Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "calendarId": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "start": "={{ $now.plus({ hours: 1 }).toISO() }}",
+        "end": "={{ $now.plus({ hours: 2 }).toISO() }}",
+        "summary": "n8n Test Event - {{ $now.toFormat('yyyy-MM-dd HH:mm') }}",
+        "description": "This is a test event created by n8n workflow to verify Google Calendar integration.",
+        "options": {}
+      },
+      "id": "create-test-event",
+      "name": "Create Test Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        300
+      ],
+      "credentials": {
+        "googleCalendarOAuth2": {
+          "id": "GOOGLE_CALENDAR_CREDENTIAL_ID",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "testSummary",
+              "value": "={{ $json.summary }}"
+            },
+            {
+              "name": "testEventId",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "final-result",
+      "name": "Test Complete",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-qm6ub",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Get Upcoming Events": {
+      "main": [
+        [
+          {
+            "node": "Format Test Result",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Test Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Test Result": {
+      "main": [
+        [
+          {
+            "node": "Test Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Test Event": {
+      "main": [
+        [
+          {
+            "node": "Test Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Upcoming Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Get Upcoming Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "b574d83d-72e6-46be-af30-0c5f646467ec",
+  "activeVersionId": "b574d83d-72e6-46be-af30-0c5f646467ec",
+  "versionCounter": 13,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T06:16:44.745Z",
+      "createdAt": "2026-01-16T06:16:44.745Z",
+      "role": "workflow:owner",
+      "workflowId": "YoNrVBtzjBk01F1M",
+      "projectId": "tsTbJZGUE5kG3iLn",
+      "project": {
+        "updatedAt": "2026-01-16T01:43:55.287Z",
+        "createdAt": "2025-09-25T16:21:12.451Z",
+        "id": "tsTbJZGUE5kG3iLn",
+        "name": "Wen Jyue Lew <wenjyue@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-25T16:21:12.452Z",
+            "createdAt": "2025-09-25T16:21:12.452Z",
+            "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+            "projectId": "tsTbJZGUE5kG3iLn",
+            "user": {
+              "updatedAt": "2026-01-16T05:25:41Z",
+              "createdAt": "2025-09-25T16:21:11.915Z",
+              "id": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+              "email": "wenjyue@gmail.com",
+              "firstName": "Wen Jyue",
+              "lastName": "Lew",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-25T16:22:49.004Z",
+                "personalization_survey_n8n_version": "1.112.5",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "Z5672DIWhrcHlLgj",
+                "userActivatedAt": 1758819204165,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 0,
+                  "lastShownAt": 1768539858694
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-16",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-16T07:15:55.158Z",
+      "createdAt": "2026-01-16T07:15:55.158Z",
+      "id": "XMXs88S6cJ6Hiyjq",
+      "name": "Test"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T07:14:03.587Z",
+    "createdAt": "2026-01-16T07:14:03.587Z",
+    "versionId": "b574d83d-72e6-46be-af30-0c5f646467ec",
+    "workflowId": "YoNrVBtzjBk01F1M",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "test-google-calendar",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          180,
+          300
+        ],
+        "webhookId": "wh-acsjx9"
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "calendarId": {
+            "__rl": true,
+            "value": "primary",
+            "mode": "id"
+          },
+          "returnAll": false,
+          "limit": 5,
+          "options": {
+            "timeMin": "={{ $now.toISO() }}",
+            "orderBy": "startTime",
+            "singleEvents": true
+          }
+        },
+        "id": "get-events",
+        "name": "Get Upcoming Events",
+        "type": "n8n-nodes-base.googleCalendar",
+        "typeVersion": 1.1,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "googleCalendarOAuth2": {
+            "id": "GOOGLE_CALENDAR_CREDENTIAL_ID",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format test results\nconst items = $input.all();\nconst eventCount = items.length;\n\nconst events = items.map(item => {\n  const event = item.json;\n  return {\n    id: event.id,\n    summary: event.summary || '(No title)',\n    start: event.start?.dateTime || event.start?.date || 'N/A',\n    end: event.end?.dateTime || event.end?.date || 'N/A'\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    message: `✅ Google Calendar test successful! Found ${eventCount} upcoming event(s).`,\n    eventCount: eventCount,\n    events: events,\n    testDate: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "format-result",
+        "name": "Format Test Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "calendarId": {
+            "__rl": true,
+            "value": "primary",
+            "mode": "id"
+          },
+          "start": "={{ $now.plus({ hours: 1 }).toISO() }}",
+          "end": "={{ $now.plus({ hours: 2 }).toISO() }}",
+          "summary": "n8n Test Event - {{ $now.toFormat('yyyy-MM-dd HH:mm') }}",
+          "description": "This is a test event created by n8n workflow to verify Google Calendar integration.",
+          "options": {}
+        },
+        "id": "create-test-event",
+        "name": "Create Test Event",
+        "type": "n8n-nodes-base.googleCalendar",
+        "typeVersion": 1.1,
+        "position": [
+          880,
+          300
+        ],
+        "credentials": {
+          "googleCalendarOAuth2": {
+            "id": "GOOGLE_CALENDAR_CREDENTIAL_ID",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "values": {
+            "string": [
+              {
+                "name": "testSummary",
+                "value": "={{ $json.summary }}"
+              },
+              {
+                "name": "testEventId",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "final-result",
+        "name": "Test Complete",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1100,
+          300
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger-qm6ub",
+        "name": "When clicking \"Execute Workflow\"",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          180,
+          100
+        ]
+      }
+    ],
+    "connections": {
+      "Get Upcoming Events": {
+        "main": [
+          [
+            {
+              "node": "Format Test Result",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Create Test Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Test Result": {
+        "main": [
+          [
+            {
+              "node": "Test Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Test Event": {
+        "main": [
+          [
+            {
+              "node": "Test Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Get Upcoming Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking \"Execute Workflow\"": {
+        "main": [
+          [
+            {
+              "node": "Get Upcoming Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wen Jyue Lew",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-16T07:14:03.646Z",
+        "id": 29,
+        "workflowId": "YoNrVBtzjBk01F1M",
+        "versionId": "b574d83d-72e6-46be-af30-0c5f646467ec",
+        "event": "activated",
+        "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac"
+      }
+    ]
+  }
+}

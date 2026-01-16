@@ -1,0 +1,317 @@
+{
+  "updatedAt": "2026-01-16T07:42:06.974Z",
+  "createdAt": "2026-01-16T06:16:44.902Z",
+  "id": "92Y0lEFhUEnbJnsF",
+  "name": "TEST: Notion",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "test-notion",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ],
+      "webhookId": "wh-vnpgd"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "YOUR_DATABASE_ID",
+          "mode": "id"
+        },
+        "returnAll": false,
+        "limit": 5,
+        "options": {}
+      },
+      "id": "get-pages",
+      "name": "Get Database Pages",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "YdwHAoBhEJv30Fft",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format test results\nconst items = $input.all();\nconst pageCount = items.length;\n\nif (pageCount === 0) {\n  return [{\n    json: {\n      success: true,\n      message: \"✅ Notion test successful! Database connection works. (No pages found, but connection is valid)\",\n      pageCount: 0,\n      testDate: new Date().toISOString(),\n      note: \"Database is accessible but may be empty or filters returned no results.\"\n    }\n  }];\n}\n\nconst pages = items.map(item => {\n  const page = item.json;\n  const props = page.properties || {};\n  \n  // Try to extract title from various property types\n  let title = 'Untitled';\n  for (const propName in props) {\n    const prop = props[propName];\n    if (prop.type === 'title' && prop.title && prop.title.length > 0) {\n      title = prop.title[0].plain_text || prop.title[0].text?.content || 'Untitled';\n      break;\n    }\n  }\n  \n  return {\n    id: page.id,\n    title: title,\n    url: page.url || 'N/A',\n    createdTime: page.created_time || 'N/A',\n    lastEditedTime: page.last_edited_time || 'N/A'\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    message: `✅ Notion test successful! Retrieved ${pageCount} page(s) from database.`,\n    pageCount: pageCount,\n    pages: pages,\n    testDate: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-result",
+      "name": "Format Test Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-xxs0ln",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Get Database Pages": {
+      "main": [
+        [
+          {
+            "node": "Format Test Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Database Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Get Database Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "e30cb0cf-41f7-4ce3-a297-8065c3ca55f0",
+  "activeVersionId": "e30cb0cf-41f7-4ce3-a297-8065c3ca55f0",
+  "versionCounter": 13,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T06:16:44.903Z",
+      "createdAt": "2026-01-16T06:16:44.903Z",
+      "role": "workflow:owner",
+      "workflowId": "92Y0lEFhUEnbJnsF",
+      "projectId": "tsTbJZGUE5kG3iLn",
+      "project": {
+        "updatedAt": "2026-01-16T01:43:55.287Z",
+        "createdAt": "2025-09-25T16:21:12.451Z",
+        "id": "tsTbJZGUE5kG3iLn",
+        "name": "Wen Jyue Lew <wenjyue@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-25T16:21:12.452Z",
+            "createdAt": "2025-09-25T16:21:12.452Z",
+            "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+            "projectId": "tsTbJZGUE5kG3iLn",
+            "user": {
+              "updatedAt": "2026-01-16T05:25:41Z",
+              "createdAt": "2025-09-25T16:21:11.915Z",
+              "id": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+              "email": "wenjyue@gmail.com",
+              "firstName": "Wen Jyue",
+              "lastName": "Lew",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-25T16:22:49.004Z",
+                "personalization_survey_n8n_version": "1.112.5",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "Z5672DIWhrcHlLgj",
+                "userActivatedAt": 1758819204165,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 0,
+                  "lastShownAt": 1768539858694
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-16",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-16T07:15:55.158Z",
+      "createdAt": "2026-01-16T07:15:55.158Z",
+      "id": "XMXs88S6cJ6Hiyjq",
+      "name": "Test"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T07:14:03.86Z",
+    "createdAt": "2026-01-16T07:14:03.86Z",
+    "versionId": "e30cb0cf-41f7-4ce3-a297-8065c3ca55f0",
+    "workflowId": "92Y0lEFhUEnbJnsF",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "test-notion",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          180,
+          300
+        ],
+        "webhookId": "wh-vnpgd"
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "getAll",
+          "databaseId": {
+            "__rl": true,
+            "value": "YOUR_DATABASE_ID",
+            "mode": "id"
+          },
+          "returnAll": false,
+          "limit": 5,
+          "options": {}
+        },
+        "id": "get-pages",
+        "name": "Get Database Pages",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "YdwHAoBhEJv30Fft",
+            "name": "Notion account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format test results\nconst items = $input.all();\nconst pageCount = items.length;\n\nif (pageCount === 0) {\n  return [{\n    json: {\n      success: true,\n      message: \"✅ Notion test successful! Database connection works. (No pages found, but connection is valid)\",\n      pageCount: 0,\n      testDate: new Date().toISOString(),\n      note: \"Database is accessible but may be empty or filters returned no results.\"\n    }\n  }];\n}\n\nconst pages = items.map(item => {\n  const page = item.json;\n  const props = page.properties || {};\n  \n  // Try to extract title from various property types\n  let title = 'Untitled';\n  for (const propName in props) {\n    const prop = props[propName];\n    if (prop.type === 'title' && prop.title && prop.title.length > 0) {\n      title = prop.title[0].plain_text || prop.title[0].text?.content || 'Untitled';\n      break;\n    }\n  }\n  \n  return {\n    id: page.id,\n    title: title,\n    url: page.url || 'N/A',\n    createdTime: page.created_time || 'N/A',\n    lastEditedTime: page.last_edited_time || 'N/A'\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    message: `✅ Notion test successful! Retrieved ${pageCount} page(s) from database.`,\n    pageCount: pageCount,\n    pages: pages,\n    testDate: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "format-result",
+        "name": "Format Test Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger-xxs0ln",
+        "name": "When clicking \"Execute Workflow\"",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          180,
+          100
+        ]
+      }
+    ],
+    "connections": {
+      "Get Database Pages": {
+        "main": [
+          [
+            {
+              "node": "Format Test Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Get Database Pages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking \"Execute Workflow\"": {
+        "main": [
+          [
+            {
+              "node": "Get Database Pages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wen Jyue Lew",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-16T07:14:03.901Z",
+        "id": 32,
+        "workflowId": "92Y0lEFhUEnbJnsF",
+        "versionId": "e30cb0cf-41f7-4ce3-a297-8065c3ca55f0",
+        "event": "activated",
+        "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac"
+      }
+    ]
+  }
+}

@@ -56,7 +56,16 @@ class N8NApiClient {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        try {
+          const errorBody = await response.text();
+          if (errorBody) {
+            errorMessage += ` - ${errorBody}`;
+          }
+        } catch (e) {
+          // Ignore error body parsing errors
+        }
+        throw new Error(errorMessage);
       }
       return await response.json();
     } catch (error) {
@@ -103,14 +112,16 @@ class N8NApiClient {
    * Execute a workflow
    */
   async executeWorkflow(id, inputData = {}) {
-    return this.request('POST', `/api/v1/workflows/${id}/execute`, inputData);
+    // Note: Manual execution via API is restricted. 
+    // Use webhooks for external triggers.
+    throw new Error('Manual execution via API is not supported. Use webhooks.');
   }
 
   /**
    * List executions
    */
   async listExecutions(workflowId = null) {
-    const endpoint = workflowId 
+    const endpoint = workflowId
       ? `/api/v1/executions?workflowId=${workflowId}`
       : '/api/v1/executions';
     return this.request('GET', endpoint);

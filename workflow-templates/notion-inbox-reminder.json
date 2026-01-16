@@ -1,0 +1,213 @@
+{
+  "name": "2.1 Inbox Processing Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "8daa8801-62e4-4447-a1cb-a5fedceedcb9",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "filterType": "json",
+        "filterJson": "={ \"property\": \"When\", \"select\": { \"is_empty\": true } }"
+      },
+      "id": "notion-query",
+      "name": "Query Notion Inbox",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "NOTION_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter items older than 24 hours AND without \"When\" date\nconst items = $input.all();\nconst now = new Date();\nconst twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);\n\nconst filteredItems = items.filter(item => {\n  const json = item.json;\n  \n  // Check if \"When\" date is empty (already filtered by Notion, but double-check)\n  const props = json.properties || {};\n  const whenProperty = props['When'] || props['when'] || {};\n  const whenDate = whenProperty.date || (whenProperty.select && whenProperty.select.name);\n  \n  if (whenDate !== null && whenDate !== undefined) {\n    return false; // Has a \"When\" date, skip\n  }\n  \n  // Check if created_time is older than 24 hours\n  const createdTime = json.created_time || json.createdTime;\n  if (!createdTime) {\n    return false; // No created time, skip\n  }\n  \n  const createdDate = new Date(createdTime);\n  const isOlderThan24h = createdDate < twentyFourHoursAgo;\n  \n  return isOlderThan24h;\n});\n\n// Return filtered items with count\nreturn filteredItems.map(item => ({\n  json: {\n    ...item.json,\n    _filtered: true\n  }\n}));"
+      },
+      "id": "filter-items",
+      "name": "Filter Old Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Count filtered items\nconst items = $input.all();\nconst count = items.length;\n\nreturn [{\n  json: {\n    count: count,\n    hasItems: count > 0,\n    message: count > 0 \n      ? `You have ${count} item${count === 1 ? '' : 's'} in your Notion Tasks Inbox older than 24 hours without a \"When\" date. Please process your inbox.`\n      : 'No items found.'\n  }\n}];"
+      },
+      "id": "count-items",
+      "name": "Count Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "larger"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-items",
+      "name": "Check If Items Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "id": "telegram-send",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1320,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Query Notion Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Notion Inbox": {
+      "main": [
+        [
+          {
+            "node": "Filter Old Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Old Items": {
+      "main": [
+        [
+          {
+            "node": "Count Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count Items": {
+      "main": [
+        [
+          {
+            "node": "Check If Items Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Items Found": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "GTD",
+      "createdAt": "2026-01-16T00:00:00.000Z",
+      "updatedAt": "2026-01-16T00:00:00.000Z"
+    },
+    {
+      "name": "reminder",
+      "createdAt": "2026-01-16T00:00:00.000Z",
+      "updatedAt": "2026-01-16T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2026-01-16T00:00:00.000Z",
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "local"
+  }
+}

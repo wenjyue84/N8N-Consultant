@@ -1,0 +1,35 @@
+{
+  "name": "n8n-workflow-builder",
+  "description": "Create and manage n8n automation workflows with natural language guidance",
+  "version": "1.0.0",
+  "author": "N8N Consultant",
+  "instructions_file": "n8n-workflow-builder.md",
+  "triggers": [
+    "create an n8n workflow",
+    "build a workflow",
+    "make an automation",
+    "set up n8n",
+    "workflow for",
+    "automate with n8n"
+  ],
+  "capabilities": [
+    "workflow-design",
+    "node-configuration",
+    "json-generation",
+    "credential-setup",
+    "deployment",
+    "api-integration"
+  ],
+  "dependencies": {
+    "api_key_file": "credentials/n8n-api-key.txt",
+    "api_client": "utilities/n8n-api-client.js",
+    "reference_workflows": "workflow-templates/test-workflows/",
+    "output_directory": "workflow-templates/"
+  },
+  "settings": {
+    "n8n_base_url": "http://localhost:5678",
+    "default_active": false,
+    "auto_save_templates": true,
+    "include_documentation": true
+  }
+}

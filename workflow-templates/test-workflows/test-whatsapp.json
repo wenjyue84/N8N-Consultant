@@ -1,0 +1,234 @@
+{
+  "updatedAt": "2026-01-16T08:11:10.018Z",
+  "createdAt": "2026-01-16T06:07:18.763Z",
+  "id": "HZ9dPvQJJtaNv3yu",
+  "name": "Test Whatsapp via Periskope",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "test-whatsapp",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        192,
+        304
+      ],
+      "webhookId": "wh-zu64vj"
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-g7d8vj",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        192,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.periskope.app/v1/message/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-phone",
+              "value": "60127088789"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"chat_id\": \"60127088789@c.us\",\n  \"message\": \"Testing from n8n Welye\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        464,
+        224
+      ],
+      "id": "600ac003-0cd8-4d2d-a8c2-17d16a3e6e09",
+      "name": "Periskope",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "uuWu8FGTTO9VX3Bn",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Periskope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Periskope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "9ec44b97-a6dd-4675-847c-369d3daa1b83",
+  "activeVersionId": "2c48d97d-33ba-4e23-b1cb-503174259639",
+  "versionCounter": 22,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T06:07:18.767Z",
+      "createdAt": "2026-01-16T06:07:18.767Z",
+      "role": "workflow:owner",
+      "workflowId": "HZ9dPvQJJtaNv3yu",
+      "projectId": "tsTbJZGUE5kG3iLn",
+      "project": {
+        "updatedAt": "2026-01-16T01:43:55.287Z",
+        "createdAt": "2025-09-25T16:21:12.451Z",
+        "id": "tsTbJZGUE5kG3iLn",
+        "name": "Wen Jyue Lew <wenjyue@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-25T16:21:12.452Z",
+            "createdAt": "2025-09-25T16:21:12.452Z",
+            "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+            "projectId": "tsTbJZGUE5kG3iLn",
+            "user": {
+              "updatedAt": "2026-01-16T05:25:41Z",
+              "createdAt": "2025-09-25T16:21:11.915Z",
+              "id": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+              "email": "wenjyue@gmail.com",
+              "firstName": "Wen Jyue",
+              "lastName": "Lew",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-25T16:22:49.004Z",
+                "personalization_survey_n8n_version": "1.112.5",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "Z5672DIWhrcHlLgj",
+                "userActivatedAt": 1758819204165,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 0,
+                  "lastShownAt": 1768539858694
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-16",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-16T07:15:55.158Z",
+      "createdAt": "2026-01-16T07:15:55.158Z",
+      "id": "XMXs88S6cJ6Hiyjq",
+      "name": "Test"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T07:47:20Z",
+    "createdAt": "2026-01-16T07:47:17.484Z",
+    "versionId": "2c48d97d-33ba-4e23-b1cb-503174259639",
+    "workflowId": "HZ9dPvQJJtaNv3yu",
+    "nodes": [
+      {
+        "parameters": {
+          "path": "test-whatsapp",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          192,
+          304
+        ],
+        "webhookId": "wh-zu64vj"
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger-g7d8vj",
+        "name": "When clicking \"Execute Workflow\"",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          192,
+          112
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          []
+        ]
+      },
+      "When clicking \"Execute Workflow\"": {
+        "main": [
+          []
+        ]
+      }
+    },
+    "authors": "Wen Jyue Lew",
+    "name": "Version 2c48d97d",
+    "description": "",
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-16T07:47:20.541Z",
+        "id": 37,
+        "workflowId": "HZ9dPvQJJtaNv3yu",
+        "versionId": "2c48d97d-33ba-4e23-b1cb-503174259639",
+        "event": "activated",
+        "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac"
+      }
+    ]
+  }
+}

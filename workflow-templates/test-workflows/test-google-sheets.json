@@ -1,0 +1,481 @@
+{
+  "updatedAt": "2026-01-16T07:42:03.862Z",
+  "createdAt": "2026-01-16T06:16:44.798Z",
+  "id": "QLsSy2WsA1GyMdPs",
+  "name": "TEST: Google Sheets",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "test-google-sheets",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ],
+      "webhookId": "wh-87wlo6"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {
+          "range": "A1:C5"
+        }
+      },
+      "id": "read-sheet",
+      "name": "Read Sheet Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format read results\nconst items = $input.all();\nconst rowCount = items.length;\n\nconst rows = items.map((item, index) => {\n  const row = item.json;\n  return {\n    rowNumber: index + 1,\n    data: row\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    message: `✅ Google Sheets READ test successful! Retrieved ${rowCount} row(s).`,\n    rowCount: rowCount,\n    rows: rows,\n    testDate: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-read-result",
+      "name": "Format Read Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+            "Test Type": "n8n Integration Test",
+            "Status": "✅ Success"
+          }
+        },
+        "options": {}
+      },
+      "id": "write-test-row",
+      "name": "Write Test Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format final test results\nconst readResult = $('Format Read Result').first().json;\nconst writeResult = $input.first().json;\n\nreturn [{\n  json: {\n    success: true,\n    message: \"✅ Google Sheets test successful! Both READ and WRITE operations worked.\",\n    read: {\n      rowCount: readResult.rowCount,\n      success: true\n    },\n    write: {\n      success: true,\n      updatedCells: writeResult.updatedCells || 'N/A',\n      updatedRange: writeResult.updatedRange || 'N/A'\n    },\n    testDate: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-final-result",
+      "name": "Format Final Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-h464mm",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Read Sheet Data": {
+      "main": [
+        [
+          {
+            "node": "Format Read Result",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Test Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Read Result": {
+      "main": [
+        [
+          {
+            "node": "Format Final Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Test Row": {
+      "main": [
+        [
+          {
+            "node": "Format Final Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Sheet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Read Sheet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "61be5a42-a046-4a25-91c1-10f9a734966b",
+  "activeVersionId": "61be5a42-a046-4a25-91c1-10f9a734966b",
+  "versionCounter": 13,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T06:16:44.8Z",
+      "createdAt": "2026-01-16T06:16:44.8Z",
+      "role": "workflow:owner",
+      "workflowId": "QLsSy2WsA1GyMdPs",
+      "projectId": "tsTbJZGUE5kG3iLn",
+      "project": {
+        "updatedAt": "2026-01-16T01:43:55.287Z",
+        "createdAt": "2025-09-25T16:21:12.451Z",
+        "id": "tsTbJZGUE5kG3iLn",
+        "name": "Wen Jyue Lew <wenjyue@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-25T16:21:12.452Z",
+            "createdAt": "2025-09-25T16:21:12.452Z",
+            "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+            "projectId": "tsTbJZGUE5kG3iLn",
+            "user": {
+              "updatedAt": "2026-01-16T05:25:41Z",
+              "createdAt": "2025-09-25T16:21:11.915Z",
+              "id": "08a66384-5a78-4bcf-a1d9-974f059b7aac",
+              "email": "wenjyue@gmail.com",
+              "firstName": "Wen Jyue",
+              "lastName": "Lew",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-25T16:22:49.004Z",
+                "personalization_survey_n8n_version": "1.112.5",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "Z5672DIWhrcHlLgj",
+                "userActivatedAt": 1758819204165,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 0,
+                  "lastShownAt": 1768539858694
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-16",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-16T07:15:55.158Z",
+      "createdAt": "2026-01-16T07:15:55.158Z",
+      "id": "XMXs88S6cJ6Hiyjq",
+      "name": "Test"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T07:14:03.698Z",
+    "createdAt": "2026-01-16T07:14:03.698Z",
+    "versionId": "61be5a42-a046-4a25-91c1-10f9a734966b",
+    "workflowId": "QLsSy2WsA1GyMdPs",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "test-google-sheets",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          180,
+          300
+        ],
+        "webhookId": "wh-87wlo6"
+      },
+      {
+        "parameters": {
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_SPREADSHEET_ID",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "name"
+          },
+          "options": {
+            "range": "A1:C5"
+          }
+        },
+        "id": "read-sheet",
+        "name": "Read Sheet Data",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.4,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "googleSheetsOAuth2": {
+            "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format read results\nconst items = $input.all();\nconst rowCount = items.length;\n\nconst rows = items.map((item, index) => {\n  const row = item.json;\n  return {\n    rowNumber: index + 1,\n    data: row\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    message: `✅ Google Sheets READ test successful! Retrieved ${rowCount} row(s).`,\n    rowCount: rowCount,\n    rows: rows,\n    testDate: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "format-read-result",
+        "name": "Format Read Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_SPREADSHEET_ID",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "name"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Timestamp": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "Test Type": "n8n Integration Test",
+              "Status": "✅ Success"
+            }
+          },
+          "options": {}
+        },
+        "id": "write-test-row",
+        "name": "Write Test Row",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.4,
+        "position": [
+          880,
+          300
+        ],
+        "credentials": {
+          "googleSheetsOAuth2": {
+            "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format final test results\nconst readResult = $('Format Read Result').first().json;\nconst writeResult = $input.first().json;\n\nreturn [{\n  json: {\n    success: true,\n    message: \"✅ Google Sheets test successful! Both READ and WRITE operations worked.\",\n    read: {\n      rowCount: readResult.rowCount,\n      success: true\n    },\n    write: {\n      success: true,\n      updatedCells: writeResult.updatedCells || 'N/A',\n      updatedRange: writeResult.updatedRange || 'N/A'\n    },\n    testDate: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "format-final-result",
+        "name": "Format Final Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          300
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger-h464mm",
+        "name": "When clicking \"Execute Workflow\"",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          180,
+          100
+        ]
+      }
+    ],
+    "connections": {
+      "Read Sheet Data": {
+        "main": [
+          [
+            {
+              "node": "Format Read Result",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Write Test Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Read Result": {
+        "main": [
+          [
+            {
+              "node": "Format Final Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write Test Row": {
+        "main": [
+          [
+            {
+              "node": "Format Final Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Read Sheet Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking \"Execute Workflow\"": {
+        "main": [
+          [
+            {
+              "node": "Read Sheet Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wen Jyue Lew",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-16T07:14:03.728Z",
+        "id": 30,
+        "workflowId": "QLsSy2WsA1GyMdPs",
+        "versionId": "61be5a42-a046-4a25-91c1-10f9a734966b",
+        "event": "activated",
+        "userId": "08a66384-5a78-4bcf-a1d9-974f059b7aac"
+      }
+    ]
+  }
+}

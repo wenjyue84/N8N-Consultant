@@ -22,6 +22,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# MCP configs (contain API keys)
+.cursor/mcp.json
+
 # Temporary files
 *.tmp
 *.temp

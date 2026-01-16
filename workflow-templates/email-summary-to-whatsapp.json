@@ -1,0 +1,331 @@
+{
+    "name": "Daily Email Summary to WhatsApp",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "30 8 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "schedule-trigger",
+            "name": "Every Day 8:30 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                180,
+                300
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "manual-trigger",
+            "name": "Manual Trigger",
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [
+                180,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "returnAll": false,
+                "limit": 50,
+                "filters": {
+                    "receivedAfter": "={{ $now.minus({hours: 24}).toISO() }}",
+                    "labelIds": [
+                        "INBOX"
+                    ],
+                    "q": "is:unread"
+                },
+                "options": {}
+            },
+            "id": "get-emails",
+            "name": "Get Unread Emails (24h)",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.1,
+            "position": [
+                420,
+                200
+            ],
+            "credentials": {
+                "gmailOAuth2": {
+                    "id": "kqQQwRQvzbnGtK2v",
+                    "name": "Gmail account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const emails = $input.all();\n\nif (emails.length === 0) {\n  return [{\n    json: {\n      hasEmails: false,\n      count: 0,\n      summary: \"📭 No unread emails in the last 24 hours.\"\n    }\n  }];\n}\n\n// Extract email details\nconst emailDetails = emails.map(item => {\n  const email = item.json;\n  return {\n    from: email.from?.emailAddress || email.from || 'Unknown',\n    subject: email.subject || 'No Subject',\n    snippet: email.snippet || '',\n    date: email.date || email.internalDate\n  };\n});\n\n// Create prompt for summarization\nconst emailList = emailDetails.map((e, i) => \n  `${i + 1}. From: ${e.from}\\n   Subject: ${e.subject}\\n   Preview: ${e.snippet.substring(0, 100)}...`\n).join('\\n\\n');\n\nreturn [{\n  json: {\n    hasEmails: true,\n    count: emails.length,\n    emailList: emailList,\n    prompt: `You are a personal assistant summarizing emails for a busy professional. Here are the unread emails from the last 24 hours:\\n\\n${emailList}\\n\\nProvide a concise summary in this format:\\n📬 **Email Summary** (${emails.length} unread)\\n\\n1. **Important/Urgent**: List any time-sensitive emails\\n2. **Action Required**: Emails needing response or action\\n3. **FYI/Updates**: Informational emails\\n\\nKeep it brief and scannable for WhatsApp. Use emojis sparingly.`\n  }\n}];"
+            },
+            "id": "prepare-emails",
+            "name": "Prepare Email Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                640,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "check-has-emails",
+                            "leftValue": "={{ $json.hasEmails }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "has-emails-check",
+            "name": "Has Emails?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                860,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o-mini",
+                "prompt": {
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are a concise personal assistant. Summarize emails in a clean, scannable format optimized for WhatsApp. Use minimal emojis. Be brief but informative."
+                        },
+                        {
+                            "role": "user",
+                            "content": "={{ $json.prompt }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "maxTokens": 500,
+                    "temperature": 0.3
+                }
+            },
+            "id": "summarize-emails",
+            "name": "Summarize with AI",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1.8,
+            "position": [
+                1100,
+                100
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "OPENAI_CREDENTIAL_ID",
+                    "name": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const aiResponse = $input.first().json;\nconst message = aiResponse.message?.content || aiResponse.choices?.[0]?.message?.content || 'Unable to generate summary';\n\nreturn [{\n  json: {\n    message: message\n  }\n}];"
+            },
+            "id": "format-ai-response",
+            "name": "Format AI Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1320,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// No emails case - just pass through the summary\nreturn [{\n  json: {\n    message: $json.summary\n  }\n}];"
+            },
+            "id": "no-emails-message",
+            "name": "No Emails Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.periskope.app/v1/message/send",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "x-phone",
+                            "value": "60127088789"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"chat_id\": \"60127088789@c.us\",\n  \"message\": {{ JSON.stringify($json.message) }}\n}",
+                "options": {}
+            },
+            "id": "send-whatsapp",
+            "name": "Send WhatsApp via Periskope",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.3,
+            "position": [
+                1540,
+                200
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "uuWu8FGTTO9VX3Bn",
+                    "name": "Header Auth account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const response = $input.first().json;\nreturn [{\n  json: {\n    success: true,\n    message: '✅ Email summary sent to WhatsApp',\n    periskopeResponse: response\n  }\n}];"
+            },
+            "id": "format-result",
+            "name": "Format Result",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1760,
+                200
+            ]
+        }
+    ],
+    "connections": {
+        "Every Day 8:30 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Get Unread Emails (24h)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Manual Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Unread Emails (24h)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Unread Emails (24h)": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Email Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Email Data": {
+            "main": [
+                [
+                    {
+                        "node": "Has Emails?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Has Emails?": {
+            "main": [
+                [
+                    {
+                        "node": "Summarize with AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "No Emails Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Summarize with AI": {
+            "main": [
+                [
+                    {
+                        "node": "Format AI Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format AI Response": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp via Periskope",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "No Emails Message": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp via Periskope",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send WhatsApp via Periskope": {
+            "main": [
+                [
+                    {
+                        "node": "Format Result",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "callerPolicy": "workflowsFromSameOwner"
+    }
+}

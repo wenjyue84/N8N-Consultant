@@ -1,53 +1,75 @@
 # N8N Consultant
 
-[![GitHub](https://img.shields.io/badge/GitHub-wenjyue84%2FN8N--Consultant-blue?logo=github)](https://github.com/wenjyue84/N8N-Consultant)
+> AI-powered consultant for creating n8n workflows with guidance, templates, and utilities.
 
-An AI-powered consultant to help you create n8n workflows. This consultant provides guidance, templates, and utilities for building automation workflows in n8n.
+**📖 For Claude/AI context, start with [`claude.md`](claude.md)**
+
+## Project Structure
+
+```
+N8N Consultant/
+├── claude.md                    # 🤖 AI entry point - read this first
+├── .agent/
+│   ├── context/                 # Deep knowledge
+│   │   ├── architecture.md      # System design
+│   │   ├── conventions.md       # Coding standards
+│   │   └── dependencies.md      # External services
+│   └── workflows/               # Automation scripts
+│       ├── start-n8n.md         # /start-n8n
+│       ├── create-workflow.md   # /create-workflow
+│       └── troubleshoot.md      # /troubleshoot
+├── credentials/                 # API keys (gitignored)
+├── docs/
+│   ├── setup/                   # First-time setup
+│   └── guides/                  # How-to guides
+├── utilities/                   # JS API client scripts
+└── workflow-templates/          # Reusable workflow JSON
+    ├── test-workflows/          # 🧪 Node test workflows (start here!)
+    └── ...                      # Production workflow templates
+```
+
+## Quick Start
+
+```powershell
+# Start n8n
+n8n start
+
+# Open in browser
+# http://localhost:5678
+```
 
 ## Features
 
-- Workflow creation guidance
-- Template workflows for common use cases
-- Workflow validation and optimization suggestions
-- Node configuration assistance
-- Best practices and patterns
+- **Node Testing**: Test workflows for major nodes (Google Calendar, Notion, Telegram, etc.)
+- **Workflow Guidance**: Design and build automation workflows
+- **Templates**: Pre-built workflows for common use cases
+- **API Client**: Programmatic n8n control via `utilities/`
+- **Best Practices**: Patterns and conventions
 
-## Usage
+## 🧪 Testing Node Integrations
 
-Simply ask questions about creating n8n workflows, and the consultant will help you:
+Before building complex workflows, test your node integrations:
 
-- Design workflow structures
-- Configure nodes properly
-- Connect different services
-- Handle errors and edge cases
-- Optimize workflow performance
+```powershell
+# Import all test workflows at once
+node utilities/test-all-nodes.js
+
+# Or import individually
+node utilities/import-workflow.js workflow-templates/test-workflows/test-telegram.json
+```
+
+See [`workflow-templates/test-workflows/README.md`](workflow-templates/test-workflows/README.md) for detailed setup instructions.
 
 ## Prerequisites
 
-- n8n installed (version 2.3.5+)
-- n8n server running (local or remote)
-- API key configured (stored in `credentials/n8n-api-key.txt`)
+- n8n installed (`npm install -g n8n`)
+- Node.js 18+
+- API key configured (see `credentials/`)
 
-## Workflow Creation
+## For AI Assistants
 
-The consultant can help you create workflows by:
-
-1. Understanding your automation needs
-2. Suggesting appropriate nodes and connections
-3. Providing workflow JSON that can be imported into n8n
-4. Explaining node configurations and parameters
-
-## API Integration
-
-Your n8n API key is stored securely in `credentials/n8n-api-key.txt`. Use the API client utilities to programmatically interact with your n8n instance:
-
-- `utilities/n8n-api-client.js` - Full-featured API client
-- `utilities/api-client-example.js` - Usage examples
-
-## Examples
-
-Ask questions like:
-- "How do I create a workflow that sends an email when a new file is uploaded?"
-- "Help me set up a workflow to sync data between two APIs"
-- "Create a workflow template for webhook processing"
-- "Use the API to list all my workflows"
+Start with `claude.md` - it contains:
+- Project overview and structure
+- Links to context files
+- Critical rules and conventions
+- Active project status

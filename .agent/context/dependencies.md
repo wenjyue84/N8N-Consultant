@@ -73,19 +73,104 @@ N8N_HOST=localhost
 
 ## MCP Server Integration
 
-### Setup
-See `mcp-setup-guide.md` for full instructions.
+### n8n-mcp Server (Installed)
 
-**Quick check**:
-```powershell
-# Verify MCP is configured
-Get-Content "$env:USERPROFILE\.config\mcp\servers.json"
+The `n8n-mcp` server provides AI assistants with deep knowledge of n8n nodes and workflow management capabilities.
+
+**Package**: [czlonkowski/n8n-mcp](https://github.com/czlonkowski/n8n-mcp)
+
+### Configuration by IDE
+
+#### Claude Desktop / Claude Code
+Location: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "command": "npx",
+      "args": ["n8n-mcp"],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "http://localhost:5678",
+        "N8N_API_KEY": "<see credentials/n8n-api-key.txt>"
+      }
+    }
+  }
+}
 ```
 
-### MCP Resources Available
-- Workflow operations
-- Execution monitoring
-- Credential management
+#### Cursor IDE
+Location: `.cursor/mcp.json` in project root or `~/.cursor/mcp.json` globally
+
+```json
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "command": "npx",
+      "args": ["n8n-mcp"],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "http://localhost:5678",
+        "N8N_API_KEY": "<see credentials/n8n-api-key.txt>"
+      }
+    }
+  }
+}
+```
+
+#### Windsurf / Other IDEs
+Check IDE documentation for MCP configuration location. Use same config structure as above.
+
+### Available MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `search_nodes` | Search n8n nodes by name/function |
+| `get_node_details` | Get node properties, operations, parameters |
+| `list_workflows` | List all workflows in n8n instance |
+| `get_workflow` | Get specific workflow details |
+| `create_workflow` | Create new workflow via API |
+| `update_workflow` | Update existing workflow |
+| `list_executions` | List workflow execution history |
+| `get_credentials` | List available credentials |
+
+### When to Use MCP vs Local Scripts
+
+| Task | Use MCP | Use Local Scripts |
+|------|---------|-------------------|
+| Query node documentation | ✅ | |
+| Search for nodes | ✅ | |
+| List/view workflows | ✅ | ✅ |
+| Create simple workflows | ✅ | |
+| Complex workflow operations | | ✅ `utilities/` |
+| Batch operations | | ✅ `utilities/` |
+| Custom API calls | | ✅ `n8n-api-client.js` |
+
+### Verify MCP is Working
+
+In Claude Desktop/Cursor, ask:
+```
+What parameters does the HTTP Request node have?
+```
+
+If MCP is working, you'll get detailed node documentation.
+
+### Troubleshooting MCP
+
+**"MCP server not responding"**
+- Ensure Node.js is installed
+- Run `npx n8n-mcp` manually to check for errors
+- Restart your IDE
+
+**"Cannot connect to n8n instance"**
+- Verify n8n is running: `n8n start`
+- Check API key is valid
+- Ensure `N8N_API_URL` is correct
 
 ## External Services (Common Integrations)
 
