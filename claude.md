@@ -6,7 +6,7 @@
 - **Purpose**: Help users design, build, and manage n8n automation workflows
 - **Tech Stack**: n8n (2.3.5+), Node.js, PowerShell (Windows)
 - **Instance**: Local (`http://localhost:5678`)
-- **Current Phase**: Development/Personal Use
+- **Current Phase**: Development/Personal Use\r\n- **Repository**: [github.com/wenjyue84/N8N-Consultant](https://github.com/wenjyue84/N8N-Consultant)
 
 ---
 

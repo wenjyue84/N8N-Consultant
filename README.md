@@ -1,5 +1,7 @@
 # N8N Consultant
 
+[![GitHub](https://img.shields.io/badge/GitHub-wenjyue84%2FN8N--Consultant-blue?logo=github)](https://github.com/wenjyue84/N8N-Consultant)
+
 An AI-powered consultant to help you create n8n workflows. This consultant provides guidance, templates, and utilities for building automation workflows in n8n.
 
 ## Features
